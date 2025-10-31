@@ -6,12 +6,9 @@ export default function App() {
       <nav style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
         <Link to="/">Оформить заявку</Link>
         <Link to="/orders">Реестр заказов</Link>
-        <Link to="/admin/cities">Админ: Города</Link>
-        <Link to="/admin/tariffs">Админ: Тарифы</Link>
       </nav>
       <Outlet />
     </div>
   )
 }
-
 

@@ -6,10 +6,6 @@ export default function AdminCitiesPage() {
   const { data: cities = [], refetch } = useQuery({ queryKey: ['cities'], queryFn: api.listCities as any })
   const [name, setName] = useState('')
 
-  const create = useMutation({
-    mutationFn: () => api.createUser({ full_name: 'Admin', phone: '000' }) as any,
-  })
-
   const addCity = useMutation({
     mutationFn: async () => api.createCity({ name, is_active: true }),
     onSuccess: () => { setName(''); refetch() },
@@ -30,5 +26,4 @@ export default function AdminCitiesPage() {
     </div>
   )
 }
-
 

@@ -5,8 +5,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import OrderPage from './pages/OrderPage'
 import OrdersPage from './pages/OrdersPage'
-import AdminCitiesPage from './pages/AdminCitiesPage'
-import AdminTariffsPage from './pages/AdminTariffsPage'
 
 const router = createBrowserRouter([
   {
@@ -15,8 +13,6 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <OrderPage /> },
       { path: '/orders', element: <OrdersPage /> },
-      { path: '/admin/cities', element: <AdminCitiesPage /> },
-      { path: '/admin/tariffs', element: <AdminTariffsPage /> },
     ],
   },
 ])
@@ -30,5 +26,4 @@ createRoot(document.getElementById('root')!).render(
     </QueryClientProvider>
   </React.StrictMode>
 )
-
 

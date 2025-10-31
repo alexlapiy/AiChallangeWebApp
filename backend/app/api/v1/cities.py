@@ -5,6 +5,7 @@ from app.infra.db import getSession
 from app.repositories.models import City
 from app.repositories.city_repo import CityRepository
 from app.schemas.city import CityCreate, CityDto, CityUpdate
+from app.api.deps import requireAdmin
 
 
 router = APIRouter()
@@ -17,7 +18,7 @@ def listCities(session: Session = Depends(getSession)) -> list[CityDto]:
     return [CityDto.model_validate(x) for x in items]
 
 
-@router.post("", response_model=CityDto, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CityDto, status_code=status.HTTP_201_CREATED, dependencies=[Depends(requireAdmin)])
 def createCity(payload: CityCreate, session: Session = Depends(getSession)) -> CityDto:
     obj = City(name=payload.name, is_active=payload.is_active)
     session.add(obj)
@@ -25,7 +26,7 @@ def createCity(payload: CityCreate, session: Session = Depends(getSession)) -> C
     return CityDto.model_validate(obj)
 
 
-@router.put("/{city_id}", response_model=CityDto)
+@router.put("/{city_id}", response_model=CityDto, dependencies=[Depends(requireAdmin)])
 def updateCity(city_id: int, payload: CityUpdate, session: Session = Depends(getSession)) -> CityDto:
     obj = session.get(City, city_id)
     if obj is None:
@@ -39,7 +40,7 @@ def updateCity(city_id: int, payload: CityUpdate, session: Session = Depends(get
     return CityDto.model_validate(obj)
 
 
-@router.delete("/{city_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{city_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(requireAdmin)])
 def deleteCity(city_id: int, session: Session = Depends(getSession)) -> None:
     obj = session.get(City, city_id)
     if obj is None:

@@ -15,6 +15,7 @@ from app.schemas.order import (
     OrderPreviewResponse,
 )
 from app.services.pricing_service import PricingService
+from app.api.deps import requireAdmin
 
 
 router = APIRouter()
@@ -86,7 +87,7 @@ def payOrder(order_id: int, session: Session = Depends(getSession)) -> OrderDto:
     return OrderDto.model_validate(obj)
 
 
-@router.patch("/{order_id}/payment-status", response_model=OrderDto)
+@router.patch("/{order_id}/payment-status", response_model=OrderDto, dependencies=[Depends(requireAdmin)])
 def setPaymentStatus(
     order_id: int,
     new_status: PaymentStatus,

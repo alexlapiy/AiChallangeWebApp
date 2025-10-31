@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.infra.db import getSession
 from app.repositories.models import Tariff
 from app.schemas.tariff import TariffCreate, TariffDto, TariffUpdate
+from app.api.deps import requireAdmin
 
 
 router = APIRouter()
@@ -15,7 +16,7 @@ def listTariffs(session: Session = Depends(getSession)) -> list[TariffDto]:
     return [TariffDto.model_validate(x) for x in items]
 
 
-@router.post("", response_model=TariffDto, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TariffDto, status_code=status.HTTP_201_CREATED, dependencies=[Depends(requireAdmin)])
 def createTariff(payload: TariffCreate, session: Session = Depends(getSession)) -> TariffDto:
     obj = Tariff(
         month=payload.month,
@@ -27,7 +28,7 @@ def createTariff(payload: TariffCreate, session: Session = Depends(getSession)) 
     return TariffDto.model_validate(obj)
 
 
-@router.put("/{tariff_id}", response_model=TariffDto)
+@router.put("/{tariff_id}", response_model=TariffDto, dependencies=[Depends(requireAdmin)])
 def updateTariff(tariff_id: int, payload: TariffUpdate, session: Session = Depends(getSession)) -> TariffDto:
     obj = session.get(Tariff, tariff_id)
     if obj is None:
@@ -43,7 +44,7 @@ def updateTariff(tariff_id: int, payload: TariffUpdate, session: Session = Depen
     return TariffDto.model_validate(obj)
 
 
-@router.delete("/{tariff_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{tariff_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(requireAdmin)])
 def deleteTariff(tariff_id: int, session: Session = Depends(getSession)) -> None:
     obj = session.get(Tariff, tariff_id)
     if obj is None:

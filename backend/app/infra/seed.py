@@ -2,7 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.infra.db import Base, engine
-from app.repositories.models import City, FixedRoute, Tariff
+from app.repositories.models import City, FixedRoute, Tariff, Admin
+from app.infra.security import hashPassword
 
 
 def runBootstrap(session: Session) -> None:
@@ -31,5 +32,10 @@ def runBootstrap(session: Session) -> None:
     for m in range(1, 13):
         if m not in months:
             session.add(Tariff(month=m, price_per_km_le_1000=150, price_per_km_gt_1000=100))
+
+    # Default admin
+    existing_admin = session.execute(select(Admin)).scalars().first()
+    if existing_admin is None:
+        session.add(Admin(login="admin", password_hash=hashPassword("admin")))
 
 

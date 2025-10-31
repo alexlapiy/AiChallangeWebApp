@@ -1,10 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
+import logging
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 
 def createApp() -> FastAPI:
     app = FastAPI(title="Shipment API", version="1.0.0")
+    logger = logging.getLogger(__name__)
 
     app.add_middleware(
         CORSMiddleware,
@@ -19,9 +22,9 @@ def createApp() -> FastAPI:
         from app.api.v1 import router as api_v1_router  # type: ignore
 
         app.include_router(api_v1_router, prefix="/api/v1")
-    except Exception:
-        # App can still start before routers exist during bootstrap
-        pass
+        logger.info("API v1 router included with %d routes", len(app.router.routes))
+    except Exception as e:
+        logger.exception("Failed to include API v1 router: %s", e)
 
     # Dev bootstrap seed
     try:
@@ -36,8 +39,22 @@ def createApp() -> FastAPI:
                 session.commit()
             finally:
                 session.close()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception("Startup seed failed: %s", e)
+
+    @app.exception_handler(HTTPException)
+    def http_exception_handler(_: Request, exc: HTTPException):
+        # Normalize error to {"error": message}
+        detail = exc.detail
+        if isinstance(detail, dict) and "error" in detail:
+            message = detail["error"]
+        else:
+            message = str(detail)
+        return JSONResponse(status_code=exc.status_code, content={"error": message})
+
+    @app.exception_handler(ValueError)
+    def value_error_handler(_: Request, exc: ValueError):
+        return JSONResponse(status_code=400, content={"error": str(exc)})
 
     return app
 

@@ -30,6 +30,7 @@ export default function OrderPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isBookingOpen, setIsBookingOpen] = useState(false)
   const [isAuthOpen, setIsAuthOpen] = useState(false)
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ id: number; phone: string; fullName: string } | null>(null)
 
@@ -40,6 +41,15 @@ export default function OrderPage() {
   const [fromCityId, setFromCityId] = useState<number | undefined>(undefined)
   const [toCityId, setToCityId] = useState<number | undefined>(undefined)
   const [startDate, setStartDate] = useState<string>('')
+  
+  const [contactName, setContactName] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
+  const [contactMessage, setContactMessage] = useState('')
+  const [contactErrors, setContactErrors] = useState<{
+    name?: string
+    phone?: string
+    message?: string
+  }>({})
 
   const cityIdToName = useMemo(() => {
     const m = new Map<number, string>()
@@ -55,7 +65,7 @@ export default function OrderPage() {
         setIsLoggedIn(true)
         setCurrentUser(user)
         setFullName(user.fullName)
-        setPhone(user.phone)
+        setPhone(formatPhone(user.phone))
       } catch {}
     }
   }, [])
@@ -75,17 +85,26 @@ export default function OrderPage() {
   const createUserMutation = useMutation({
     mutationFn: async () => {
       if (!fullName || !phone) throw new Error('Заполните все поля')
-      return api.createUser({ full_name: fullName, phone })
+      const normalizedPhone = normalizePhone(phone)
+      return api.createUser({ full_name: fullName, phone: normalizedPhone })
     },
     onSuccess: (data: any) => {
-      const user = { id: data.id, phone, fullName }
+      const user = { id: data.id, phone: data.phone, fullName }
       localStorage.setItem('cybertrax_user', JSON.stringify(user))
       setIsLoggedIn(true)
       setCurrentUser(user)
       setIsAuthOpen(false)
+      setAuthMode('login')
       toast.success('Добро пожаловать!')
     },
   })
+
+  const handleAuthOpen = () => {
+    setIsAuthOpen(true)
+    setAuthMode('login')
+    setFullName('')
+    setPhone('')
+  }
 
   const createOrderMutation = useMutation({
     mutationFn: async () => {
@@ -119,6 +138,88 @@ export default function OrderPage() {
     setFullName('')
     setPhone('')
     toast.success('Вы вышли из системы')
+  }
+
+  const formatPhone = (value: string): string => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length === 0) return ''
+    if (numbers.length <= 1) return `+7`
+    if (numbers.length <= 4) return `+7 (${numbers.slice(1)}`
+    if (numbers.length <= 7) return `+7 (${numbers.slice(1, 4)}) ${numbers.slice(4)}`
+    if (numbers.length <= 9) return `+7 (${numbers.slice(1, 4)}) ${numbers.slice(4, 7)}-${numbers.slice(7)}`
+    return `+7 (${numbers.slice(1, 4)}) ${numbers.slice(4, 7)}-${numbers.slice(7, 9)}-${numbers.slice(9, 11)}`
+  }
+
+  const normalizePhone = (value: string): string => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length === 0) return ''
+    return `+${numbers}`
+  }
+
+  const handlePhoneChange = (value: string) => {
+    const formatted = formatPhone(value)
+    setPhone(formatted)
+  }
+
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      if (!phone.trim()) throw new Error('Введите номер телефона')
+      const normalizedPhone = normalizePhone(phone)
+      const users = await api.listUsers() as any[]
+      const user = users.find(u => u.phone === normalizedPhone)
+      if (!user) throw new Error('Пользователь не найден')
+      return user
+    },
+    onSuccess: (data: any) => {
+      const user = { id: data.id, phone: data.phone, fullName: data.full_name }
+      localStorage.setItem('cybertrax_user', JSON.stringify(user))
+      setIsLoggedIn(true)
+      setCurrentUser(user)
+      setFullName(data.full_name)
+      setPhone(formatPhone(data.phone))
+      setIsAuthOpen(false)
+      toast.success('Добро пожаловать!')
+    },
+  })
+
+  const validatePhone = (phone: string): boolean => {
+    const phoneRegex = /^\+7\s?\(\d{3}\)\s?\d{3}-\d{2}-\d{2}$/
+    return phoneRegex.test(phone)
+  }
+
+  const handleContactSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const errors: { name?: string; phone?: string; message?: string } = {}
+    
+    if (!contactName.trim()) {
+      errors.name = 'Введите имя'
+    }
+    
+    if (!contactPhone.trim()) {
+      errors.phone = 'Введите номер телефона'
+    } else if (!validatePhone(contactPhone)) {
+      errors.phone = 'Номер должен быть в формате +7 (999) 123-45-67'
+    }
+    
+    if (!contactMessage.trim()) {
+      errors.message = 'Введите сообщение'
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setContactErrors(errors)
+      if (!contactName.trim() && !contactPhone.trim() && !contactMessage.trim()) {
+        toast.error('Введите данные')
+      } else {
+        toast.error('Исправьте ошибки в форме')
+      }
+      return
+    }
+    
+    setContactErrors({})
+    toast.success('Сообщение отправлено!')
+    setContactName('')
+    setContactPhone('')
+    setContactMessage('')
   }
 
   const scrollToSection = (id: string) => {
@@ -177,7 +278,7 @@ export default function OrderPage() {
                   </Button>
                 </div>
               ) : (
-                <Button onClick={() => setIsAuthOpen(true)} className="bg-white text-black hover:bg-gray-200">
+                <Button onClick={handleAuthOpen} className="bg-white text-black hover:bg-gray-200">
                   Войти
                 </Button>
               )}
@@ -222,7 +323,7 @@ export default function OrderPage() {
                   </Button>
                 </>
               ) : (
-                <Button onClick={() => { setIsAuthOpen(true); setIsMenuOpen(false); }} className="bg-white text-black hover:bg-gray-200 w-full">
+                <Button onClick={() => { handleAuthOpen(); setIsMenuOpen(false); }} className="bg-white text-black hover:bg-gray-200 w-full">
                   Войти
                 </Button>
               )}
@@ -261,7 +362,7 @@ export default function OrderPage() {
                   <Button 
                     onClick={() => {
                       if (!isLoggedIn) {
-                        setIsAuthOpen(true)
+                        handleAuthOpen()
                         toast.error('Пожалуйста, войдите в систему')
                       } else {
                         setIsBookingOpen(true)
@@ -431,7 +532,7 @@ export default function OrderPage() {
             viewport={{ once: true }}
             className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-3xl p-8 md:p-12 shadow-2xl"
           >
-            <div className="grid md:grid-cols-2 gap-8 mb-12">
+            <div className="grid md:grid-cols-2 gap-8 mb-10">
               <div className="flex items-center gap-4">
                 <div className="bg-white p-3 rounded-xl">
                   <Phone className="h-6 w-6 text-black" />
@@ -451,6 +552,90 @@ export default function OrderPage() {
                 </div>
               </div>
             </div>
+
+            <form className="space-y-6" onSubmit={handleContactSubmit}>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-white/60">
+                    Имя
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Ваше имя"
+                    value={contactName}
+                    onChange={(e) => {
+                      setContactName(e.target.value)
+                      if (contactErrors.name) {
+                        setContactErrors({ ...contactErrors, name: undefined })
+                      }
+                    }}
+                    className={`bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:border-white/40 focus-visible:ring-white/20 ${
+                      contactErrors.name ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20' : ''
+                    }`}
+                  />
+                  {contactErrors.name && (
+                    <p className="text-red-500 text-sm">{contactErrors.name}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-white/60">
+                    Телефон
+                  </Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+7 (999) 123-45-67"
+                    value={contactPhone}
+                    onChange={(e) => {
+                      setContactPhone(e.target.value)
+                      if (contactErrors.phone) {
+                        setContactErrors({ ...contactErrors, phone: undefined })
+                      }
+                    }}
+                    className={`bg-white/10 border-white/20 text-white placeholder:text-white/40 focus-visible:border-white/40 focus-visible:ring-white/20 ${
+                      contactErrors.phone ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20' : ''
+                    }`}
+                  />
+                  {contactErrors.phone && (
+                    <p className="text-red-500 text-sm">{contactErrors.phone}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="message" className="text-white/60">
+                  Сообщение
+                </Label>
+                <textarea
+                  id="message"
+                  rows={6}
+                  placeholder="Ваше сообщение"
+                  value={contactMessage}
+                  onChange={(e) => {
+                    setContactMessage(e.target.value)
+                    if (contactErrors.message) {
+                      setContactErrors({ ...contactErrors, message: undefined })
+                    }
+                  }}
+                  className={`flex w-full min-h-[120px] rounded-md border px-3 py-2 text-base text-white placeholder:text-white/40 transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm resize-none ${
+                    contactErrors.message 
+                      ? 'border-red-500 bg-white/10 focus-visible:border-red-500 focus-visible:ring-red-500/20' 
+                      : 'border-white/20 bg-white/10 focus-visible:border-white/40 focus-visible:ring-white/20'
+                  }`}
+                />
+                {contactErrors.message && (
+                  <p className="text-red-500 text-sm">{contactErrors.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-white text-black hover:bg-white/90 rounded-lg py-6 text-base font-medium"
+              >
+                Отправить сообщение
+              </Button>
+            </form>
           </motion.div>
         </div>
       </section>
@@ -505,41 +690,86 @@ export default function OrderPage() {
       </footer>
 
       {/* Auth Dialog */}
-      <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
+      <Dialog open={isAuthOpen} onOpenChange={(open) => {
+        setIsAuthOpen(open)
+        if (!open) {
+          setAuthMode('login')
+          setFullName('')
+          setPhone('')
+        }
+      }}>
         <DialogContent className="backdrop-blur-xl bg-black/95 border-white/20 text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">Регистрация</DialogTitle>
+            <DialogTitle className="text-white">
+              {authMode === 'login' ? 'Вход' : 'Регистрация'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {authMode === 'register' && (
+              <div>
+                <Label htmlFor="auth-name" className="text-white">ФИО</Label>
+                <Input 
+                  id="auth-name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Иванов Иван Иванович"
+                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40 mt-1"
+                />
+              </div>
+            )}
             <div>
-              <Label htmlFor="auth-name">ФИО</Label>
-              <Input 
-                id="auth-name"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Иванов Иван Иванович"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-              />
-            </div>
-            <div>
-              <Label htmlFor="auth-phone">Телефон</Label>
+              <Label htmlFor="auth-phone" className="text-white">Телефон</Label>
               <Input 
                 id="auth-phone"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => handlePhoneChange(e.target.value)}
                 placeholder="+7 (999) 123-45-67"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 mt-1"
               />
             </div>
-            <Button 
-              onClick={() => createUserMutation.mutate()}
-              disabled={createUserMutation.isPending}
-              className="w-full bg-white text-black hover:bg-gray-200"
-            >
-              {createUserMutation.isPending ? 'Регистрация...' : 'Зарегистрироваться'}
-            </Button>
-            {createUserMutation.isError && (
-              <p className="text-red-400 text-sm">{(createUserMutation.error as Error).message}</p>
+            
+            {authMode === 'login' ? (
+              <>
+                <Button 
+                  onClick={() => loginMutation.mutate()}
+                  disabled={loginMutation.isPending}
+                  className="w-full bg-white text-black hover:bg-gray-200"
+                >
+                  {loginMutation.isPending ? 'Вход...' : 'Войти'}
+                </Button>
+                {loginMutation.isError && (
+                  <p className="text-red-400 text-sm">{(loginMutation.error as Error).message}</p>
+                )}
+                <div className="pt-2 border-t border-white/20">
+                  <button
+                    onClick={() => setAuthMode('register')}
+                    className="text-white/60 hover:text-white text-sm transition-colors"
+                  >
+                    Нет аккаунта? Зарегистрироваться
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Button 
+                  onClick={() => createUserMutation.mutate()}
+                  disabled={createUserMutation.isPending}
+                  className="w-full bg-white text-black hover:bg-gray-200"
+                >
+                  {createUserMutation.isPending ? 'Регистрация...' : 'Зарегистрироваться'}
+                </Button>
+                {createUserMutation.isError && (
+                  <p className="text-red-400 text-sm">{(createUserMutation.error as Error).message}</p>
+                )}
+                <div className="pt-2 border-t border-white/20">
+                  <button
+                    onClick={() => setAuthMode('login')}
+                    className="text-white/60 hover:text-white text-sm transition-colors"
+                  >
+                    Уже есть аккаунт? Войти
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </DialogContent>

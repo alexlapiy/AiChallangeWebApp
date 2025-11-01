@@ -26,6 +26,7 @@ async function request(path: string, options: RequestInit = {}) {
 export const api = {
   createUser: (body: { full_name: string; phone: string }) =>
     request('/api/v1/users', { method: 'POST', body: JSON.stringify(body) }),
+  listUsers: () => request('/api/v1/users'),
   listCities: () => request('/api/v1/cities'),
   previewOrder: (body: any) =>
     request('/api/v1/orders/preview', { method: 'POST', body: JSON.stringify(body) }),

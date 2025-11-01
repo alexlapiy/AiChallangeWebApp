@@ -4,14 +4,17 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Truck, ArrowLeft, Check } from 'lucide-react'
 import { Button } from '../shared/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../shared/ui/select'
 import { api } from '../shared/api'
 import { useNavigate } from 'react-router-dom'
 
 type Order = {
   id: number
+  created_at: string
   start_date: string
   eta_date: string
   transport_price: number
+  insurance_price: number
   payment_status: 'PENDING' | 'PAID' | 'MANUAL'
   from_city_id: number
   to_city_id: number
@@ -19,9 +22,9 @@ type Order = {
 
 export default function OrdersPage() {
   const navigate = useNavigate()
-  const [dateD, setDateD] = useState<string>(new Date().toISOString().slice(0, 10))
-  const [orderByCost, setOrderByCost] = useState(false)
+  const [sortBy, setSortBy] = useState<'created' | 'eta' | 'price'>('created')
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
+  const [userName, setUserName] = useState<string>('')
 
   const { data: cities = [] } = useQuery({ queryKey: ['cities'], queryFn: api.listCities as any })
 
@@ -37,6 +40,7 @@ export default function OrdersPage() {
       try {
         const user = JSON.parse(savedUser)
         setCurrentUserId(user.id)
+        setUserName(user.fullName || '')
       } catch {}
     }
   }, [])
@@ -44,14 +48,29 @@ export default function OrdersPage() {
   const params = useMemo(() => {
     const p = new URLSearchParams()
     if (currentUserId) p.set('user_id', currentUserId.toString())
-    if (orderByCost) p.set('order_by_cost', 'true')
     return p
-  }, [currentUserId, orderByCost])
+  }, [currentUserId])
 
-  const { data: orders = [], refetch } = useQuery({
+  const { data: rawOrders = [], refetch } = useQuery({
     queryKey: ['orders', params.toString()],
     queryFn: () => api.listOrders(params) as any,
   })
+
+  const orders = useMemo(() => {
+    const list = [...(rawOrders as Order[])]
+    if (sortBy === 'created') {
+      return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    } else if (sortBy === 'eta') {
+      return list.sort((a, b) => new Date(a.eta_date).getTime() - new Date(b.eta_date).getTime())
+    } else if (sortBy === 'price') {
+      return list.sort((a, b) => {
+        const priceA = a.transport_price + a.insurance_price
+        const priceB = b.transport_price + b.insurance_price
+        return priceB - priceA
+      })
+    }
+    return list
+  }, [rawOrders, sortBy])
 
   const pay = useMutation({ 
     mutationFn: (id: number) => api.payOrder(id) as any, 
@@ -60,15 +79,6 @@ export default function OrdersPage() {
       toast.success('Оплата прошла успешно!')
     }
   })
-
-  function rowColor(o: Order): string {
-    const D = new Date(dateD)
-    const start = new Date(o.start_date)
-    const eta = new Date(o.eta_date)
-    if (D < start) return '#e8ffe8'
-    if (D >= start && D < eta) return '#fff8e0'
-    return '#e8efff'
-  }
 
   return (
     <div className="min-h-screen bg-black">
@@ -94,6 +104,17 @@ export default function OrdersPage() {
               </div>
               <span className="text-white tracking-wider">КИБЕРТРАКС</span>
             </motion.div>
+            
+            {userName && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-white/80 text-sm"
+              >
+                <span className="text-white/60">Пользователь: </span>
+                <span className="text-white font-medium">{userName}</span>
+              </motion.div>
+            )}
           </div>
         </div>
       </header>
@@ -106,34 +127,22 @@ export default function OrdersPage() {
             animate={{ opacity: 1, y: 0 }}
             className="backdrop-blur-xl bg-white/5 border border-white/20 rounded-3xl p-8 shadow-2xl"
           >
-            <h2 className="text-white mb-6 text-3xl font-bold">Реестр заказов</h2>
-            
-            <div className="flex flex-wrap gap-4 items-center mb-6">
-              <div>
-                <label className="text-white/80 text-sm mr-2">Дата D:</label>
-                <input 
-                  type="date" 
-                  value={dateD} 
-                  onChange={e => setDateD(e.target.value)}
-                  className="bg-white/10 border border-white/20 rounded-md px-3 py-2 text-white"
-                />
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-white text-3xl font-bold">Реестр заказов</h2>
+              
+              <div className="flex items-center gap-3">
+                <label className="text-white/80 text-sm">Сортировать:</label>
+                <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                  <SelectTrigger className="w-[200px] bg-white/10 border-white/20 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black border-white/20 text-white">
+                    <SelectItem value="created">По дате создания</SelectItem>
+                    <SelectItem value="eta">По дате прибытия</SelectItem>
+                    <SelectItem value="price">По цене</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <label className="flex items-center gap-2 text-white/80 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={orderByCost} 
-                  onChange={e => setOrderByCost(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                сортировать по стоимости
-              </label>
-              <Button 
-                onClick={() => refetch()}
-                variant="outline"
-                className="bg-white/10 border-white/20 text-white hover:bg-white hover:text-black"
-              >
-                Обновить
-              </Button>
             </div>
 
             <div className="overflow-x-auto">
@@ -151,42 +160,46 @@ export default function OrdersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(orders as Order[]).map(o => (
-                    <tr 
-                      key={o.id} 
-                      className="border-b border-white/10 hover:bg-white/5 transition-colors"
-                      style={{ background: rowColor(o) }}
-                    >
-                      <td className="py-4 px-4 text-white">{o.id}</td>
-                      <td className="py-4 px-4 text-white">{cityIdToName.get(o.from_city_id) || '-'}</td>
-                      <td className="py-4 px-4 text-white">{cityIdToName.get(o.to_city_id) || '-'}</td>
-                      <td className="py-4 px-4 text-white">{new Date(o.start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
-                      <td className="py-4 px-4 text-white">{new Date(o.eta_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
-                      <td className="py-4 px-4 text-white">{o.transport_price.toLocaleString('ru-RU')} ₽</td>
-                      <td className="py-4 px-4">
-                        {o.payment_status === 'PAID' ? (
-                          <span className="inline-flex items-center gap-1 text-green-400">
-                            <Check className="h-4 w-4" />
-                            Оплачено
-                          </span>
-                        ) : (
-                          <span className="text-yellow-400">{o.payment_status}</span>
-                        )}
-                      </td>
-                      <td className="py-4 px-4">
-                        {o.payment_status !== 'PAID' && (
-                          <Button
-                            onClick={() => pay.mutate(o.id)}
-                            disabled={pay.isPending}
-                            size="sm"
-                            className="bg-white text-black hover:bg-gray-200"
-                          >
-                            {pay.isPending ? 'Оплата...' : 'Оплатить'}
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {(orders as Order[]).map(o => {
+                    const totalPrice = o.transport_price + o.insurance_price
+                    return (
+                      <tr 
+                        key={o.id} 
+                        className="border-b border-white/10 hover:bg-white/5 transition-colors"
+                      >
+                        <td className="py-4 px-4 text-white">{o.id}</td>
+                        <td className="py-4 px-4 text-white">{cityIdToName.get(o.from_city_id) || '-'}</td>
+                        <td className="py-4 px-4 text-white">{cityIdToName.get(o.to_city_id) || '-'}</td>
+                        <td className="py-4 px-4 text-white">{new Date(o.start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
+                        <td className="py-4 px-4 text-white">{new Date(o.eta_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
+                        <td className="py-4 px-4 text-white">{totalPrice.toLocaleString('ru-RU')} ₽</td>
+                        <td className="py-4 px-4">
+                          {o.payment_status === 'PAID' ? (
+                            <span className="inline-flex items-center gap-1 text-green-400">
+                              <Check className="h-4 w-4" />
+                              Оплачено
+                            </span>
+                          ) : o.payment_status === 'PENDING' ? (
+                            <span className="text-yellow-400">Ожидает оплаты</span>
+                          ) : (
+                            <span className="text-blue-400">Ручная оплата</span>
+                          )}
+                        </td>
+                        <td className="py-4 px-4">
+                          {o.payment_status !== 'PAID' && (
+                            <Button
+                              onClick={() => pay.mutate(o.id)}
+                              disabled={pay.isPending}
+                              size="sm"
+                              className="bg-white text-black hover:bg-gray-200"
+                            >
+                              {pay.isPending ? 'Оплата...' : 'Оплатить'}
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
               {orders.length === 0 && (

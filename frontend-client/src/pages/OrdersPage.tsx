@@ -160,8 +160,8 @@ export default function OrdersPage() {
                       <td className="py-4 px-4 text-white">{o.id}</td>
                       <td className="py-4 px-4 text-white">{cityIdToName.get(o.from_city_id) || '-'}</td>
                       <td className="py-4 px-4 text-white">{cityIdToName.get(o.to_city_id) || '-'}</td>
-                      <td className="py-4 px-4 text-white">{o.start_date}</td>
-                      <td className="py-4 px-4 text-white">{o.eta_date}</td>
+                      <td className="py-4 px-4 text-white">{new Date(o.start_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
+                      <td className="py-4 px-4 text-white">{new Date(o.eta_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
                       <td className="py-4 px-4 text-white">{o.transport_price.toLocaleString('ru-RU')} ₽</td>
                       <td className="py-4 px-4">
                         {o.payment_status === 'PAID' ? (

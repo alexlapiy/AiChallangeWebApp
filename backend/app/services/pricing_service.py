@@ -18,6 +18,8 @@ class PricingResult:
     transport_price: int
     insurance_price: int
     duration_hours: int
+    duration_days: int
+    duration_hours_remainder: int
     eta_date: date
 
 
@@ -51,6 +53,8 @@ class PricingService:
         insurance_price = int(round(transport_price * 0.10))
         duration_hours_float = distance_km * 24 / 1000
         duration_hours = int(round(duration_hours_float))
+        duration_days = duration_hours // 24
+        duration_hours_remainder = duration_hours % 24
         eta_date = start_date + timedelta(hours=duration_hours)
 
         return PricingResult(
@@ -60,6 +64,8 @@ class PricingService:
             transport_price=transport_price,
             insurance_price=insurance_price,
             duration_hours=duration_hours,
+            duration_days=duration_days,
+            duration_hours_remainder=duration_hours_remainder,
             eta_date=eta_date,
         )
 
@@ -87,6 +93,8 @@ class PricingService:
             transport_price=pr.transport_price,
             insurance_price=pr.insurance_price,
             duration_hours=pr.duration_hours,
+            duration_days=pr.duration_days,
+            duration_hours_remainder=pr.duration_hours_remainder,
             eta_date=pr.eta_date,
             payment_status=PaymentStatus.PENDING,
         )

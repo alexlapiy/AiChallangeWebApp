@@ -74,6 +74,8 @@ class Order(Base):
     transport_price: Mapped[int] = mapped_column(Integer)
     insurance_price: Mapped[int] = mapped_column(Integer)
     duration_hours: Mapped[int] = mapped_column(Integer)
+    duration_days: Mapped[int] = mapped_column(Integer)
+    duration_hours_remainder: Mapped[int] = mapped_column(Integer)
     eta_date: Mapped[date] = mapped_column(Date)
     payment_status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus), default=PaymentStatus.PENDING)
 

@@ -786,7 +786,7 @@ export default function OrderPage() {
               <div>
                 <Label htmlFor="car-brand">Марка автомобиля</Label>
                 <Select value={carBrand} onValueChange={setCarBrand}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="mt-2 bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Выберите марку" />
                   </SelectTrigger>
                   <SelectContent className="bg-black border-white/20 text-white">
@@ -804,7 +804,7 @@ export default function OrderPage() {
                   value={carModel}
                   onChange={(e) => setCarModel(e.target.value)}
                   placeholder="Введите модель"
-                  className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                  className="mt-2 bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
               </div>
             </div>
@@ -813,7 +813,7 @@ export default function OrderPage() {
               <div>
                 <Label htmlFor="from-city">Город отправления</Label>
                 <Select value={fromCityId?.toString() || ''} onValueChange={(value) => setFromCityId(Number(value))}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="mt-2 bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Выберите город" />
                   </SelectTrigger>
                   <SelectContent className="bg-black border-white/20 text-white">
@@ -826,7 +826,7 @@ export default function OrderPage() {
               <div>
                 <Label htmlFor="to-city">Город назначения</Label>
                 <Select value={toCityId?.toString() || ''} onValueChange={(value) => setToCityId(Number(value))}>
-                  <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectTrigger className="mt-2 bg-white/10 border-white/20 text-white">
                     <SelectValue placeholder="Выберите город" />
                   </SelectTrigger>
                   <SelectContent className="bg-black border-white/20 text-white">
@@ -845,7 +845,7 @@ export default function OrderPage() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-white/10 border-white/20 text-white"
+                className="mt-2 bg-white/10 border-white/20 text-white"
               />
             </div>
 
@@ -857,8 +857,48 @@ export default function OrderPage() {
                 <p className="text-white text-lg">{(previewMutation.data as any).transport_price.toLocaleString('ru-RU')} ₽</p>
                 <p className="text-white/60 mt-2">Страховка (10%):</p>
                 <p className="text-white text-lg">{(previewMutation.data as any).insurance_price.toLocaleString('ru-RU')} ₽</p>
+                <p className="text-white/60 mt-2">Примерное время перевозки:</p>
+                <p className="text-white text-lg">
+                  {(() => {
+                    const days = (previewMutation.data as any)?.duration_days ?? 0
+                    const hours = (previewMutation.data as any)?.duration_hours_remainder ?? 0
+                    
+                    if (days === 0 && hours === 0) return '-'
+                    
+                    const lastDigitDay = days % 10
+                    const lastTwoDigitsDay = days % 100
+                    const lastDigitHour = hours % 10
+                    const lastTwoDigitsHour = hours % 100
+                    
+                    let dayWord = 'дней'
+                    if (lastTwoDigitsDay >= 11 && lastTwoDigitsDay <= 14) {
+                      dayWord = 'дней'
+                    } else if (lastDigitDay === 1) {
+                      dayWord = 'день'
+                    } else if (lastDigitDay >= 2 && lastDigitDay <= 4) {
+                      dayWord = 'дня'
+                    }
+                    
+                    let hourWord = 'часов'
+                    if (lastTwoDigitsHour >= 11 && lastTwoDigitsHour <= 14) {
+                      hourWord = 'часов'
+                    } else if (lastDigitHour === 1) {
+                      hourWord = 'час'
+                    } else if (lastDigitHour >= 2 && lastDigitHour <= 4) {
+                      hourWord = 'часа'
+                    }
+                    
+                    let result = `${days} ${dayWord}`
+                    if (hours > 0) {
+                      result += ` ${hours} ${hourWord}`
+                    }
+                    return result
+                  })()}
+                </p>
                 <p className="text-white/60 mt-2">ETA:</p>
-                <p className="text-white text-lg">{(previewMutation.data as any).eta_date}</p>
+                <p className="text-white text-lg">
+                  {new Date((previewMutation.data as any).eta_date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                </p>
               </div>
             )}
 

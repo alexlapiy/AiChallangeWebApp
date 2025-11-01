@@ -23,6 +23,8 @@ class OrderPreviewResponse(BaseModel):
     transport_price: int
     insurance_price: int
     duration_hours: int
+    duration_days: int
+    duration_hours_remainder: int
     eta_date: date
 
 
@@ -48,6 +50,8 @@ class OrderDto(TimestampedDto):
     transport_price: int
     insurance_price: int
     duration_hours: int
+    duration_days: int
+    duration_hours_remainder: int
     eta_date: date
     payment_status: PaymentStatus
 

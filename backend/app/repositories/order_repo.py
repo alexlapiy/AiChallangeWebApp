@@ -13,6 +13,7 @@ class OrderRepository(SqlAlchemyRepository[Order]):
 
     def query(
         self,
+        user_id: Optional[int] = None,
         start_from: Optional[date] = None,
         start_to: Optional[date] = None,
         from_city_id: Optional[int] = None,
@@ -21,6 +22,8 @@ class OrderRepository(SqlAlchemyRepository[Order]):
         order_by_cost: bool = False,
     ) -> Iterable[Order]:
         q = self.session.query(Order)
+        if user_id is not None:
+            q = q.filter(Order.user_id == user_id)
         if start_from is not None:
             q = q.filter(Order.start_date >= start_from)
         if start_to is not None:

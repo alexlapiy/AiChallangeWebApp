@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'motion/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -21,6 +21,7 @@ export default function OrdersPage() {
   const navigate = useNavigate()
   const [dateD, setDateD] = useState<string>(new Date().toISOString().slice(0, 10))
   const [orderByCost, setOrderByCost] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null)
 
   const { data: cities = [] } = useQuery({ queryKey: ['cities'], queryFn: api.listCities as any })
 
@@ -30,11 +31,22 @@ export default function OrdersPage() {
     return m
   }, [cities])
 
+  useEffect(() => {
+    const savedUser = localStorage.getItem('cybertrax_user')
+    if (savedUser) {
+      try {
+        const user = JSON.parse(savedUser)
+        setCurrentUserId(user.id)
+      } catch {}
+    }
+  }, [])
+
   const params = useMemo(() => {
     const p = new URLSearchParams()
+    if (currentUserId) p.set('user_id', currentUserId.toString())
     if (orderByCost) p.set('order_by_cost', 'true')
     return p
-  }, [orderByCost])
+  }, [currentUserId, orderByCost])
 
   const { data: orders = [], refetch } = useQuery({
     queryKey: ['orders', params.toString()],

@@ -82,6 +82,7 @@ class Order(Base):
     to_city: Mapped["City"] = relationship(foreign_keys=[to_city_id])
 
 
+Index("ix_orders_user_id", Order.user_id)
 Index("ix_orders_start_date", Order.start_date)
 Index("ix_orders_payment_status", Order.payment_status)
 Index("ix_orders_from_to", Order.from_city_id, Order.to_city_id)

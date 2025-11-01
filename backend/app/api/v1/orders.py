@@ -48,6 +48,7 @@ def createOrder(payload: OrderCreate, session: Session = Depends(getSession)) ->
 
 @router.get("", response_model=list[OrderDto])
 def listOrders(
+    user_id: int | None = Query(default=None),
     start_from: date | None = Query(default=None),
     start_to: date | None = Query(default=None),
     from_city_id: int | None = Query(default=None),
@@ -58,6 +59,7 @@ def listOrders(
 ) -> Iterable[OrderDto]:
     repo = OrderRepository(session)
     items = repo.query(
+        user_id=user_id,
         start_from=start_from,
         start_to=start_to,
         from_city_id=from_city_id,

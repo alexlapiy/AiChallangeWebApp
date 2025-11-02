@@ -112,7 +112,7 @@ export default function OrdersPage() {
               <Button
                 onClick={() => navigate('/')}
                 variant="ghost"
-                className="text-white hover:bg-white/10"
+                className="text-white"
               >
                 <ArrowLeft className="h-5 w-5 mr-2" />
                 Назад

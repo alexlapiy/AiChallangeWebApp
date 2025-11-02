@@ -68,7 +68,7 @@ export default function App() {
               <Button
                 onClick={handleLogout}
                 variant="ghost"
-                className="text-white hover:bg-white/10"
+                className="text-white"
               >
                 <LogOut className="h-5 w-5 mr-2" />
                 Выйти

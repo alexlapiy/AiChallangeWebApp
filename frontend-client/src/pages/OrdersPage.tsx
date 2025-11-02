@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Truck, ArrowLeft, Check } from 'lucide-react'
 import { Button } from '../shared/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../shared/ui/select'
+import { PaymentDialog } from '../shared/ui/PaymentDialog'
 import { api } from '../shared/api'
 import { useNavigate } from 'react-router-dom'
 
@@ -25,6 +26,8 @@ export default function OrdersPage() {
   const [sortBy, setSortBy] = useState<'created' | 'eta' | 'price'>('created')
   const [currentUserId, setCurrentUserId] = useState<number | null>(null)
   const [userName, setUserName] = useState<string>('')
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   const { data: cities = [] } = useQuery({ queryKey: ['cities'], queryFn: api.listCities as any })
 
@@ -76,9 +79,22 @@ export default function OrdersPage() {
     mutationFn: (id: number) => api.payOrder(id) as any, 
     onSuccess: () => {
       refetch()
+      setIsPaymentDialogOpen(false)
+      setSelectedOrder(null)
       toast.success('Оплата прошла успешно!')
     }
   })
+
+  const handlePayClick = (order: Order) => {
+    setSelectedOrder(order)
+    setIsPaymentDialogOpen(true)
+  }
+
+  const handlePayConfirm = () => {
+    if (selectedOrder) {
+      pay.mutate(selectedOrder.id)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black">
@@ -188,12 +204,11 @@ export default function OrdersPage() {
                         <td className="py-4 px-4">
                           {o.payment_status !== 'PAID' && (
                             <Button
-                              onClick={() => pay.mutate(o.id)}
-                              disabled={pay.isPending}
+                              onClick={() => handlePayClick(o)}
                               size="sm"
                               className="bg-white text-black hover:bg-gray-200"
                             >
-                              {pay.isPending ? 'Оплата...' : 'Оплатить'}
+                              Оплатить
                             </Button>
                           )}
                         </td>
@@ -211,6 +226,16 @@ export default function OrdersPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Payment Dialog */}
+      <PaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        transportPrice={selectedOrder?.transport_price || 0}
+        insurancePrice={selectedOrder?.insurance_price || 0}
+        onConfirm={handlePayConfirm}
+        isPending={pay.isPending}
+      />
     </div>
   )
 }

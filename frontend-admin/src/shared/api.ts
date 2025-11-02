@@ -45,6 +45,8 @@ export const api = {
   listTariffs: () => request('/api/v1/tariffs'),
   createTariff: (body: { month: number; price_per_km_le_1000: number; price_per_km_gt_1000: number }) =>
     request('/api/v1/tariffs', { method: 'POST', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
+  updateTariff: (tariffId: number, body: { month?: number; price_per_km_le_1000?: number; price_per_km_gt_1000?: number }) =>
+    request(`/api/v1/tariffs/${tariffId}`, { method: 'PUT', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
   listAllOrders: (params: URLSearchParams) =>
     request(`/api/v1/orders?${params.toString()}`),
   updatePaymentStatus: (orderId: number, status: string) =>

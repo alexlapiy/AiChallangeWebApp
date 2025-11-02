@@ -55,7 +55,7 @@ def runBootstrap(session: Session) -> None:
     # Default admin
     existing_admin = session.execute(select(Admin)).scalars().first()
     if existing_admin is None:
-        session.add(Admin(login="admin", password_hash=hashPassword("admin")))
+        session.add(Admin(login="admin", password_hash=hashPassword("admin123")))
     
     # Migrate offline_matrix.json to city_distances table
     _migrateOfflineMatrix(session)

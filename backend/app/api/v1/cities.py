@@ -20,7 +20,12 @@ def listCities(session: Session = Depends(getSession)) -> list[CityDto]:
 
 @router.post("", response_model=CityDto, status_code=status.HTTP_201_CREATED, dependencies=[Depends(requireAdmin)])
 def createCity(payload: CityCreate, session: Session = Depends(getSession)) -> CityDto:
-    obj = City(name=payload.name, is_active=payload.is_active)
+    obj = City(
+        name=payload.name,
+        is_active=payload.is_active,
+        latitude=payload.latitude,
+        longitude=payload.longitude
+    )
     session.add(obj)
     session.flush()
     return CityDto.model_validate(obj)
@@ -35,6 +40,10 @@ def updateCity(city_id: int, payload: CityUpdate, session: Session = Depends(get
         obj.name = payload.name
     if payload.is_active is not None:
         obj.is_active = payload.is_active
+    if payload.latitude is not None:
+        obj.latitude = payload.latitude
+    if payload.longitude is not None:
+        obj.longitude = payload.longitude
     session.add(obj)
     session.flush()
     return CityDto.model_validate(obj)

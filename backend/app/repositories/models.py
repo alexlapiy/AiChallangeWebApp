@@ -10,6 +10,7 @@ from sqlalchemy import (
     Date,
     Index,
     Enum as SAEnum,
+    Float,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -38,6 +39,8 @@ class City(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(120), unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
 
 class Tariff(Base):
@@ -56,6 +59,19 @@ class FixedRoute(Base):
     from_city: Mapped[str] = mapped_column(String(120))
     to_city: Mapped[str] = mapped_column(String(120))
     fixed_price: Mapped[int] = mapped_column(Integer)
+
+
+class CityDistance(Base):
+    __tablename__ = "city_distances"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    from_city_id: Mapped[int] = mapped_column(ForeignKey("cities.id"))
+    to_city_id: Mapped[int] = mapped_column(ForeignKey("cities.id"))
+    distance_km: Mapped[int] = mapped_column(Integer)
+    is_manual: Mapped[bool] = mapped_column(Boolean, default=False)
+
+    from_city: Mapped["City"] = relationship(foreign_keys=[from_city_id])
+    to_city: Mapped["City"] = relationship(foreign_keys=[to_city_id])
 
 
 class Order(Base):

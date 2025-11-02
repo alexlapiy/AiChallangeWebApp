@@ -5,7 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir fastapi uvicorn[standard] sqlalchemy "psycopg[binary]" passlib==1.7.4 bcrypt==3.2.2
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./app /app/app
 

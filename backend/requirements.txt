@@ -6,4 +6,5 @@ pydantic>=2.8
 alembic>=1.13
 passlib==1.7.4
 bcrypt==3.2.2
+httpx>=0.27
 

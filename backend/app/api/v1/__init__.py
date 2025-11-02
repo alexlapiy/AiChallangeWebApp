@@ -42,4 +42,10 @@ try:
 except Exception as e:
     logger.exception("Failed to include admin auth router: %s", e)
 
+try:
+    from .city_distances import router as city_distances_router  # type: ignore
+    router.include_router(city_distances_router, prefix="/city-distances", tags=["city-distances"])
+except Exception as e:
+    logger.exception("Failed to include city distances router: %s", e)
+
 

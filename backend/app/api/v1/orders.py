@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.infra.db import getSession
-from app.infra.distance.provider import OfflineMatrixProvider
+from app.infra.distance.provider import HybridDistanceProvider
 from app.repositories.models import Order, PaymentStatus
 from app.repositories.order_repo import OrderRepository
 from app.schemas.order import (
@@ -24,7 +24,7 @@ router = APIRouter()
 
 @router.post("/preview", response_model=OrderPreviewResponse)
 def previewOrder(payload: OrderPreviewRequest, session: Session = Depends(getSession)) -> OrderPreviewResponse:
-    provider = OfflineMatrixProvider()
+    provider = HybridDistanceProvider(session)
     service = PricingService(session, provider)
     res = service.preview(payload.start_date, payload.from_city, payload.to_city)
     return OrderPreviewResponse(**res.__dict__)
@@ -32,7 +32,9 @@ def previewOrder(payload: OrderPreviewRequest, session: Session = Depends(getSes
 
 @router.post("", response_model=OrderDto, status_code=status.HTTP_201_CREATED)
 def createOrder(payload: OrderCreate, session: Session = Depends(getSession)) -> OrderDto:
-    provider = OfflineMatrixProvider()
+    from app.repositories.models import User
+    
+    provider = HybridDistanceProvider(session)
     service = PricingService(session, provider)
     order = service.createOrder(
         user_id=payload.user_id,
@@ -44,7 +46,34 @@ def createOrder(payload: OrderCreate, session: Session = Depends(getSession)) ->
         to_city_name=payload.to_city,
     )
     session.flush()
-    return OrderDto.model_validate(order)
+    
+    # Загружаем данные пользователя
+    user = session.get(User, payload.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail={"error": "User not found"})
+    
+    return OrderDto(
+        id=order.id,
+        created_at=order.created_at,
+        updated_at=order.updated_at,
+        user_id=order.user_id,
+        user_full_name=user.full_name,
+        user_phone=user.phone,
+        car_brand_model=order.car_brand_model,
+        from_city_id=order.from_city_id,
+        to_city_id=order.to_city_id,
+        start_date=order.start_date,
+        distance_km=order.distance_km,
+        applied_price_per_km=order.applied_price_per_km,
+        is_fixed_route=order.is_fixed_route,
+        transport_price=order.transport_price,
+        insurance_price=order.insurance_price,
+        duration_hours=order.duration_hours,
+        duration_days=order.duration_days,
+        duration_hours_remainder=order.duration_hours_remainder,
+        eta_date=order.eta_date,
+        payment_status=order.payment_status,
+    )
 
 
 @router.get("", response_model=PaginatedOrdersResponse)

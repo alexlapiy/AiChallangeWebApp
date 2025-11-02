@@ -36,9 +36,9 @@ export const api = {
       body: JSON.stringify({ login, password }) 
     }),
   listCities: () => request('/api/v1/cities'),
-  createCity: (body: { name: string; is_active: boolean }) =>
+  createCity: (body: { name: string; is_active: boolean; latitude: number; longitude: number }) =>
     request('/api/v1/cities', { method: 'POST', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
-  updateCity: (cityId: number, body: { name?: string; is_active?: boolean }) =>
+  updateCity: (cityId: number, body: { name?: string; is_active?: boolean; latitude?: number; longitude?: number }) =>
     request(`/api/v1/cities/${cityId}`, { method: 'PUT', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
   deleteCity: (cityId: number) =>
     request(`/api/v1/cities/${cityId}`, { method: 'DELETE', headers: { Authorization: ADMIN_AUTH } }),

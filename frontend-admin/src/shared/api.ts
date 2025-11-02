@@ -38,6 +38,10 @@ export const api = {
   listCities: () => request('/api/v1/cities'),
   createCity: (body: { name: string; is_active: boolean }) =>
     request('/api/v1/cities', { method: 'POST', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
+  updateCity: (cityId: number, body: { name?: string; is_active?: boolean }) =>
+    request(`/api/v1/cities/${cityId}`, { method: 'PUT', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
+  deleteCity: (cityId: number) =>
+    request(`/api/v1/cities/${cityId}`, { method: 'DELETE', headers: { Authorization: ADMIN_AUTH } }),
   listTariffs: () => request('/api/v1/tariffs'),
   createTariff: (body: { month: number; price_per_km_le_1000: number; price_per_km_gt_1000: number }) =>
     request('/api/v1/tariffs', { method: 'POST', body: JSON.stringify(body), headers: { Authorization: ADMIN_AUTH } }),
@@ -48,5 +52,7 @@ export const api = {
       method: 'PATCH', 
       headers: getAuthHeaders() 
     }),
+  deleteOrder: (orderId: number) =>
+    request(`/api/v1/orders/${orderId}`, { method: 'DELETE', headers: { Authorization: ADMIN_AUTH } }),
 }
 

@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { Truck, LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react'
 import { Button } from '../shared/ui/button'
 import { Input } from '../shared/ui/input'
 import { Label } from '../shared/ui/label'
@@ -39,8 +38,6 @@ type PaginatedResponse = {
 }
 
 export default function AdminOrdersPage() {
-  const navigate = useNavigate()
-  
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [startFrom, setStartFrom] = useState('')
   const [startTo, setStartTo] = useState('')
@@ -86,11 +83,10 @@ export default function AdminOrdersPage() {
     onSuccess: () => refetch(),
   })
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_token')
-    localStorage.removeItem('admin_id')
-    navigate('/login')
-  }
+  const removeOrder = useMutation({
+    mutationFn: async (orderId: number) => api.deleteOrder(orderId),
+    onSuccess: () => refetch(),
+  })
 
   const handleReset = () => {
     setStartFrom('')
@@ -127,36 +123,8 @@ export default function AdminOrdersPage() {
   }, [data, sortBy])
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-black/80 border-b border-white/10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
-            >
-              <div className="bg-white p-2 rounded-xl">
-                <Truck className="h-6 w-6 text-black" />
-              </div>
-              <span className="text-white tracking-wider">КИБЕРТРАКС / ADMIN</span>
-            </motion.div>
-            
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              className="text-white hover:bg-white/10"
-            >
-              <LogOut className="h-5 w-5 mr-2" />
-              Выйти
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <section className="pt-24 pb-12 px-4">
+    <>
+      <section className="pb-12 px-4">
         <div className="container mx-auto max-w-7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -326,19 +294,30 @@ export default function AdminOrdersPage() {
                           {o.payment_status === 'MANUAL' && <span className="text-blue-400">Ручная</span>}
                         </td>
                         <td className="py-4 px-4" onClick={(e) => e.stopPropagation()}>
-                          <Select 
-                            value={o.payment_status} 
-                            onValueChange={(v) => updateStatus.mutate({ orderId: o.id, status: v })}
-                          >
-                            <SelectTrigger className="w-32 h-8 bg-white/10 border-white/20 text-white text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-black border-white/20 text-white">
-                              <SelectItem value="PENDING">Ожидает</SelectItem>
-                              <SelectItem value="PAID">Оплачено</SelectItem>
-                              <SelectItem value="MANUAL">Ручная</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex items-center gap-2">
+                            <Select 
+                              value={o.payment_status} 
+                              onValueChange={(v) => updateStatus.mutate({ orderId: o.id, status: v })}
+                            >
+                              <SelectTrigger className="w-32 h-8 bg-white/10 border-white/20 text-white text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-black border-white/20 text-white">
+                                <SelectItem value="PENDING">Ожидает</SelectItem>
+                                <SelectItem value="PAID">Оплачено</SelectItem>
+                                <SelectItem value="MANUAL">Ручная</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeOrder.mutate(o.id)}
+                              disabled={removeOrder.isPending}
+                              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -480,7 +459,7 @@ export default function AdminOrdersPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
 

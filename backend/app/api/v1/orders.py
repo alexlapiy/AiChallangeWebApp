@@ -214,3 +214,11 @@ def setPaymentStatus(
     return OrderDto(**dto_dict)
 
 
+@router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(requireAdmin)])
+def deleteOrder(order_id: int, session: Session = Depends(getSession)) -> None:
+    obj = session.query(Order).filter(Order.id == order_id).first()
+    if obj is None:
+        raise HTTPException(status_code=404, detail={"error": "Order not found"})
+    session.delete(obj)
+
+

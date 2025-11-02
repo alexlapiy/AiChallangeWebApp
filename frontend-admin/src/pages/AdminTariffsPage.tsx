@@ -21,7 +21,7 @@ export default function AdminTariffsPage() {
   })
 
   return (
-    <div className="min-h-screen bg-black p-8">
+    <div className="p-8">
       <div className="container mx-auto max-w-5xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

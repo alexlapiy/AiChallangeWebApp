@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { Trash2 } from 'lucide-react'
 import { api } from '../shared/api'
 import { useState } from 'react'
 import { Button } from '../shared/ui/button'
@@ -15,8 +16,19 @@ export default function AdminCitiesPage() {
     onSuccess: () => { setName(''); refetch() },
   })
 
+  const removeCity = useMutation({
+    mutationFn: async (cityId: number) => api.deleteCity(cityId),
+    onSuccess: () => refetch(),
+  })
+
+  const toggleActive = useMutation({
+    mutationFn: async ({ cityId, isActive }: { cityId: number; isActive: boolean }) => 
+      api.updateCity(cityId, { is_active: !isActive }),
+    onSuccess: () => refetch(),
+  })
+
   return (
-    <div className="min-h-screen bg-black p-8">
+    <div className="p-8">
       <div className="container mx-auto max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -53,9 +65,29 @@ export default function AdminCitiesPage() {
                 className="bg-white/10 border border-white/20 rounded-lg p-4 flex justify-between items-center"
               >
                 <span className="text-white">{c.name}</span>
-                <span className={c.is_active ? 'text-green-400' : 'text-red-400'}>
-                  {c.is_active ? 'Активен' : 'Неактивен'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toggleActive.mutate({ cityId: c.id, isActive: c.is_active })}
+                    disabled={toggleActive.isPending}
+                    className={c.is_active 
+                      ? 'text-green-400 border-green-400/50 hover:bg-green-500/10' 
+                      : 'text-red-400 border-red-400/50 hover:bg-red-500/10'
+                    }
+                  >
+                    {c.is_active ? 'Активен' : 'Неактивен'}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeCity.mutate(c.id)}
+                    disabled={removeCity.isPending}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

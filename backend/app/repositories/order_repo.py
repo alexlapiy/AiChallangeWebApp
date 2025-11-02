@@ -1,10 +1,17 @@
 from datetime import date
-from typing import Iterable, Optional
+from typing import Optional
+import math
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.repositories.base import SqlAlchemyRepository
-from app.repositories.models import Order, PaymentStatus
+from app.repositories.models import Order, PaymentStatus, User
+
+
+class OrderQueryResult:
+    def __init__(self, items: list[Order], total: int):
+        self.items = items
+        self.total = total
 
 
 class OrderRepository(SqlAlchemyRepository[Order]):
@@ -20,8 +27,11 @@ class OrderRepository(SqlAlchemyRepository[Order]):
         to_city_id: Optional[int] = None,
         payment_status: Optional[PaymentStatus] = None,
         order_by_cost: bool = False,
-    ) -> Iterable[Order]:
-        q = self.session.query(Order)
+        page: int = 1,
+        limit: int = 20,
+    ) -> OrderQueryResult:
+        q = self.session.query(Order).options(joinedload(Order.user))
+        
         if user_id is not None:
             q = q.filter(Order.user_id == user_id)
         if start_from is not None:
@@ -34,10 +44,20 @@ class OrderRepository(SqlAlchemyRepository[Order]):
             q = q.filter(Order.to_city_id == to_city_id)
         if payment_status is not None:
             q = q.filter(Order.payment_status == payment_status)
+        
+        # Получаем общее количество
+        total = q.count()
+        
+        # Сортировка
         if order_by_cost:
             q = q.order_by(Order.transport_price.desc())
         else:
             q = q.order_by(Order.start_date.desc())
-        return q.all()
+        
+        # Пагинация
+        offset = (page - 1) * limit
+        items = q.offset(offset).limit(limit).all()
+        
+        return OrderQueryResult(items=items, total=total)
 
 

@@ -51,16 +51,18 @@ export default function OrdersPage() {
   const params = useMemo(() => {
     const p = new URLSearchParams()
     if (currentUserId) p.set('user_id', currentUserId.toString())
+    p.set('limit', '100')
     return p
   }, [currentUserId])
 
-  const { data: rawOrders = [], refetch } = useQuery({
+  const { data, refetch } = useQuery({
     queryKey: ['orders', params.toString()],
     queryFn: () => api.listOrders(params) as any,
   })
 
   const orders = useMemo(() => {
-    const list = [...(rawOrders as Order[])]
+    const rawOrders = data?.items || []
+    const list = [...rawOrders]
     if (sortBy === 'created') {
       return list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     } else if (sortBy === 'eta') {
@@ -73,7 +75,7 @@ export default function OrdersPage() {
       })
     }
     return list
-  }, [rawOrders, sortBy])
+  }, [data, sortBy])
 
   const pay = useMutation({ 
     mutationFn: (id: number) => api.payOrder(id) as any, 

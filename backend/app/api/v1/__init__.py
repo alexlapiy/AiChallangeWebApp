@@ -36,4 +36,10 @@ try:
 except Exception as e:
     logger.exception("Failed to include meta router: %s", e)
 
+try:
+    from .admin_auth import router as admin_auth_router  # type: ignore
+    router.include_router(admin_auth_router, prefix="/auth/admin", tags=["admin-auth"])
+except Exception as e:
+    logger.exception("Failed to include admin auth router: %s", e)
+
 

@@ -40,6 +40,8 @@ class OrderCreate(BaseModel):
 
 class OrderDto(TimestampedDto):
     user_id: int
+    user_full_name: str
+    user_phone: str
     car_brand_model: str
     from_city_id: int
     to_city_id: int
@@ -54,5 +56,13 @@ class OrderDto(TimestampedDto):
     duration_hours_remainder: int
     eta_date: date
     payment_status: PaymentStatus
+
+
+class PaginatedOrdersResponse(BaseModel):
+    items: list[OrderDto]
+    total: int
+    page: int
+    limit: int
+    pages: int
 
 

@@ -511,6 +511,91 @@ export default function OrderPage() {
         </div>
       </section>
 
+      {/* Popular Routes Section */}
+      <section className="py-20 px-4 bg-white">
+        <div className="container mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-black mb-4 text-3xl md:text-4xl font-bold">Популярные маршруты</h2>
+            <p className="text-black/60 max-w-2xl mx-auto">
+              Наиболее востребованные направления перевозки автомобилей
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            {/* Bishkek to Moscow */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0 }}
+              className="group rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all"
+            >
+              <div className="relative h-64 overflow-hidden">
+                <ImageWithFallback 
+                  src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                  alt="Бишкек → Москва"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              </div>
+              <div className="bg-white p-8">
+                <h3 className="text-black mb-3 text-2xl font-bold">Бишкек → Москва</h3>
+                <p className="text-black/60 mb-6">
+                  Популярный маршрут для доставки автомобилей из Кыргызстана в Россию
+                </p>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-black/60 text-sm mb-1">от</p>
+                    <p className="text-black text-3xl font-bold">315 000 ₽</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-black/60 text-sm">~4-5 дней</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Moscow to Sochi */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="group rounded-3xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all"
+            >
+              <div className="relative h-64 overflow-hidden">
+                <ImageWithFallback 
+                  src="https://resize.tripster.ru/5O6xbBkwibT_YxRsFexfBhFm7OI=/fit-in/1080x810/filters:no_upscale()/https://cdn.tripster.ru/photos/b212a6d5-a872-4c9b-a7dd-6d8f99f0a9a4.jpg"
+                  alt="Москва → Сочи"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+              </div>
+              <div className="bg-white p-8">
+                <h3 className="text-black mb-3 text-2xl font-bold">Москва → Сочи</h3>
+                <p className="text-black/60 mb-6">
+                  Перевозка автомобилей на черноморское побережье
+                </p>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-black/60 text-sm mb-1">от</p>
+                    <p className="text-black text-3xl font-bold">144 000 ₽</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-black/60 text-sm">~2-3 дня</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Contact Section */}
       <section id="contact" className="py-20 px-4 bg-black">
         <div className="container mx-auto max-w-4xl">

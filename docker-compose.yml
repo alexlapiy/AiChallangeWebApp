@@ -23,6 +23,10 @@ services:
       - db
     ports:
       - "8000:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
 
   frontend-client:
     build:
@@ -32,6 +36,12 @@ services:
       VITE_API_URL: http://localhost:8000
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend-client/src:/app/src
+      - ./frontend-client/index.html:/app/index.html
+      - ./frontend-client/vite.config.ts:/app/vite.config.ts
+      - ./frontend-client/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend-client/postcss.config.js:/app/postcss.config.js
     depends_on:
       - backend
 
@@ -43,6 +53,12 @@ services:
       VITE_API_URL: http://localhost:8000
     ports:
       - "5174:5174"
+    volumes:
+      - ./frontend-admin/src:/app/src
+      - ./frontend-admin/index.html:/app/index.html
+      - ./frontend-admin/vite.config.ts:/app/vite.config.ts
+      - ./frontend-admin/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend-admin/postcss.config.js:/app/postcss.config.js
     depends_on:
       - backend
 
